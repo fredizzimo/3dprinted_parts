@@ -1,5 +1,5 @@
-include <../common/roundedcube.scad>;
-include <../common/prism.scad>;
+include <roundedcube.scad>;
+include <prism.scad>;
 
 SUPPORT_THICKNESS = 3;
 SUPPORT_HEIGHT = 40;
