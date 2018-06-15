@@ -18,16 +18,16 @@
 
 
 //Number of bearings per axle (1 or 2)
-axle_bearings = 2;
+axle_bearings = 1;
 
 // Should we use the geetech prusa i3 x axis tensioner cutout ? (true or false)
-geetech_cutout = false;
+geetech_cutout = true;
 
 // Should the top left corner be square ? (Geetech Prusa i3 x end stop is a bit high and squaring the corner gives a better contact)
-square_endstop = false;
+square_endstop = true;
 
 // Define curve smoothing (50 is good, anywhere between 20 and 100 will work with 100 being the smoothest)
-$fn = 50;
+$fn = 100;
 
 // You should only edit anything below here if you have an idea what you are doing ! :)
 
@@ -87,8 +87,8 @@ module x_carriage() {
             bolt_holes();
             bearing_cutouts();
             if (geetech_cutout) {
-                translate([-carriage_width/2 + geetech_pulley_offset - geetech_pulley_dia / 2, 0, 0])
-                cylinder(d = geetech_pulley_dia, h = total_depth);
+                translate([-carriage_width/2 + geetech_pulley_offset - geetech_pulley_dia / 2, 0, -0.1])
+                cylinder(d = geetech_pulley_dia, h = total_depth + 0.2);
             }
         }
     }
@@ -193,14 +193,14 @@ module belt_teeth()
 
 module bolt_holes()
 {
-    translate([-bolt_x_centres / 2, -bolt_y_centres / 2, 0])
-        cylinder(d = bolt_hole_dia, h = carriage_block_depth + bearing_block_depth);
-    translate([-bolt_x_centres / 2, bolt_y_centres / 2, 0])
-        cylinder(d = bolt_hole_dia, h = carriage_block_depth + bearing_block_depth);
-    translate([bolt_x_centres / 2, -bolt_y_centres / 2, 0])
-        cylinder(d = bolt_hole_dia, h = carriage_block_depth + bearing_block_depth);
-    translate([bolt_x_centres / 2, bolt_y_centres / 2, 0])
-        cylinder(d = bolt_hole_dia, h = carriage_block_depth + bearing_block_depth);
+    translate([-bolt_x_centres / 2, -bolt_y_centres / 2, -0.1])
+        cylinder(d = bolt_hole_dia, h = carriage_block_depth + bearing_block_depth + 0.2);
+    translate([-bolt_x_centres / 2, bolt_y_centres / 2, -0.1])
+        cylinder(d = bolt_hole_dia, h = carriage_block_depth + bearing_block_depth + 0.2);
+    translate([bolt_x_centres / 2, -bolt_y_centres / 2, -0.1])
+        cylinder(d = bolt_hole_dia, h = carriage_block_depth + bearing_block_depth + 0.2);
+    translate([bolt_x_centres / 2, bolt_y_centres / 2, -0.1])
+        cylinder(d = bolt_hole_dia, h = carriage_block_depth + bearing_block_depth + 0.2);
 }
 
 module bearing_cutouts()
@@ -217,15 +217,15 @@ module single_bearing_cutouts()
     
     translate([-axis_bearing_length / 2, -axis_bar_centres/2, axis_bearing_z])
     rotate([0,90,0])
-    cylinder(d = axis_bearing_dia, h = axis_bearing_length);
+    cylinder(d = axis_bearing_dia, h = axis_bearing_length + 0.1);
     
-    translate([-carriage_width / 2, axis_bar_centres/2, axis_bearing_z])
+    translate([-carriage_width / 2 - 0.1, axis_bar_centres/2, axis_bearing_z])
     rotate([0,90,0])
-    cylinder(d = axis_bearing_collar_dia, h = carriage_width);
+    cylinder(d = axis_bearing_collar_dia, h = carriage_width + 0.2);
     
-    translate([-carriage_width / 2, -axis_bar_centres/2, axis_bearing_z])
+    translate([-carriage_width / 2 - 0.1, -axis_bar_centres/2 - 0.1, axis_bearing_z])
     rotate([0,90,0])
-    cylinder(d = axis_bearing_collar_dia, h = carriage_width);
+    cylinder(d = axis_bearing_collar_dia, h = carriage_width + 0.2);
     
     translate([-axis_bearing_length / 2 + tiewrap_width, -axis_bar_centres/2, 0])
     tiewrap_cutout();
@@ -288,7 +288,7 @@ module tiewrap_cutout()
 {
     difference() {
         translate([0,0,total_depth / 2])
-            cube(size = [tiewrap_width, tiewrap_inner_height + tiewrap_depth * 2,total_depth], center = true);
+            cube(size = [tiewrap_width, tiewrap_inner_height + tiewrap_depth * 2,total_depth + 0.1], center = true);
         
         translate([0,0,tiewrap_bottom_offset])
             rotate([0, -90, 0])
