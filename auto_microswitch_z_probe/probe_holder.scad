@@ -102,14 +102,14 @@ module main()
 	difference()
 	{
 		screw_head_extra = 2;
-		hole_pos = TOP_MOUNT_WIDTH / 2 - TOP_MOUNT_BORDER - M4_RADIUS;
 		x = WIDTH - WALL_THICKNESS + screw_head_extra + M4_DIAMETER + TOP_MOUNT_BORDER;
+		hole_pos = TOP_MOUNT_WIDTH / 2 - TOP_MOUNT_BORDER - M4_RADIUS;
 		y_trans = -(TOP_MOUNT_WIDTH - LENGTH) / 2;
-		translate([0, -(TOP_MOUNT_WIDTH - LENGTH) / 2, MAIN_THICKNESS - TOP_WALL_THICKNESS])
+		translate([-x + WIDTH, -(TOP_MOUNT_WIDTH - LENGTH) / 2, MAIN_THICKNESS - TOP_WALL_THICKNESS])
 		cube([x, TOP_MOUNT_WIDTH, TOP_WALL_THICKNESS]);
-		translate([x - M4_RADIUS - TOP_MOUNT_BORDER, y_trans + TOP_MOUNT_BORDER + M4_RADIUS, MAIN_THICKNESS - 0.1])
+		translate([WALL_THICKNESS - M4_RADIUS - screw_head_extra, y_trans + TOP_MOUNT_BORDER + M4_RADIUS, MAIN_THICKNESS - 0.1])
 		hole(r=M4_RADIUS, h=TOP_WALL_THICKNESS * 2, center=true);
-		translate([x - M4_RADIUS - TOP_MOUNT_BORDER, y_trans + TOP_MOUNT_BORDER + M4_RADIUS + TOP_MOUNT_HOLE_SPACING, MAIN_THICKNESS - 0.1])
+		translate([WALL_THICKNESS - M4_RADIUS - screw_head_extra, y_trans + TOP_MOUNT_BORDER + M4_RADIUS + TOP_MOUNT_HOLE_SPACING, MAIN_THICKNESS - 0.1])
 		hole(r=M4_RADIUS, h=TOP_WALL_THICKNESS * 2, center=true);
 	}
 }
@@ -120,13 +120,13 @@ difference()
 	translate([-WALL_THICKNESS + 3, PROBE_HOLE, MOUNT_Z])
 	{
 		rotate([0, 90, 0])
-		hole(r=2.6, h = WALL_THICKNESS, center=false);
+		hole(r=2.85, h = WALL_THICKNESS, center=false, fn=6);
 	}
 
 	translate([WIDTH - 4, PROBE_HOLE, MOUNT_Z])
 	{
 		rotate([0, 90, 0])
-		hole(r=2.85, h = WALL_THICKNESS, center=false, fn=6);
+		hole(r=2.6, h = WALL_THICKNESS, center=false);
 	}
 
 	translate([-SPRING_CONE_THICKNESS + CONE_HOLE_DEPTH, SPRING_Y, SPRING_Z])
