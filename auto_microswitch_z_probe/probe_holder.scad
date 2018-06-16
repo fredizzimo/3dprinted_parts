@@ -175,5 +175,6 @@ module probe_holder()
 
 }
 
+rotate([180, 0, 0])
 probe_holder();
 
