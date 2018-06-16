@@ -25,6 +25,10 @@ MOUNT_Z = MAIN_THICKNESS - TOP_WALL_THICKNESS - MOUNT_Z_FROM_RACK_TOP - M3_RADIU
 TOP_MOUNT_BORDER = 4;
 TOP_MOUNT_HOLE_SPACING = 74;
 TOP_MOUNT_WIDTH = TOP_MOUNT_HOLE_SPACING + 2 * (TOP_MOUNT_BORDER + M4_RADIUS);
+WIRE_BRACKET_THICKNESS = 1;
+WIRE_BRACKET_OUTER_RADIUS = 8;
+WIRE_BRACKET_INNER_RADIUS = 5;
+
 
 module hole(h, r, center, fn=100)
 {
@@ -131,6 +135,19 @@ module holes()
 	hole(r=M3_RADIUS_TIGHT, h = 30, center=false);
 }
 
+module wire_bracket()
+{
+	$fn=100;
+	rotate([0, 90, 0])
+	translate([0, WIRE_BRACKET_OUTER_RADIUS, 0])
+	difference()
+	{
+		cylinder(r=WIRE_BRACKET_OUTER_RADIUS, h=WIRE_BRACKET_THICKNESS);
+		translate([0, 0, -0.1])
+		cylinder(r=WIRE_BRACKET_INNER_RADIUS, h=WIRE_BRACKET_THICKNESS + 0.2);
+	}
+}
+
 module body()
 {
 	rack_holder();
@@ -142,6 +159,7 @@ module body()
 		spring_holder();
 		spring_cone();
 	}
+	wire_bracket();
 
 	top_mounting_plate();
 }
