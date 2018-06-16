@@ -79,26 +79,8 @@ module spring_cone()
 	cylinder(h=SPRING_CONE_THICKNESS, r1=CONE_OUTER, r2=CONE_INNER, $fn=100);
 }
 
-module main()
+module top_mounting_plate()
 {
-	difference()
-	{
-		cube([WIDTH, LENGTH, MAIN_THICKNESS]);
-		translate([WALL_THICKNESS, -1, BOTTOM_WALL_THICKNESS])
-		cube([INNER_WIDTH, 60, RACK_HOLE_THICKNESS]); 
-		translate([WALL_THICKNESS, 6.5, -BOTTOM_WALL_THICKNESS])
-		cube([INNER_WIDTH, LENGTH - 2 * 6.5 , BOTTOM_WALL_THICKNESS * 3]);
-	}
-
-	spring_holder();
-	spring_cone();
-	translate([WIDTH, 0, 0])
-	mirror([1, 0, 0])
-	{
-		spring_holder();
-		spring_cone();
-	}
-
 	difference()
 	{
 		screw_head_extra = 2;
@@ -114,9 +96,20 @@ module main()
 	}
 }
 
-difference()
+module rack_holder()
 {
-	main();
+	difference()
+	{
+		cube([WIDTH, LENGTH, MAIN_THICKNESS]);
+		translate([WALL_THICKNESS, -1, BOTTOM_WALL_THICKNESS])
+		cube([INNER_WIDTH, 60, RACK_HOLE_THICKNESS]); 
+		translate([WALL_THICKNESS, 6.5, -BOTTOM_WALL_THICKNESS])
+		cube([INNER_WIDTH, LENGTH - 2 * 6.5 , BOTTOM_WALL_THICKNESS * 3]);
+	}
+}
+
+module holes()
+{
 	translate([-WALL_THICKNESS + 3, PROBE_HOLE, MOUNT_Z])
 	{
 		rotate([0, 90, 0])
@@ -138,5 +131,31 @@ difference()
 	hole(r=M3_RADIUS_TIGHT, h = 30, center=false);
 }
 
+module body()
+{
+	rack_holder();
+	spring_holder();
+	spring_cone();
+	translate([WIDTH, 0, 0])
+	mirror([1, 0, 0])
+	{
+		spring_holder();
+		spring_cone();
+	}
 
+	top_mounting_plate();
+}
+
+
+module probe_holder()
+{
+	difference()
+	{
+		body();		
+		holes();
+	}
+
+}
+
+probe_holder();
 
