@@ -1,14 +1,24 @@
-FRONT_PLATE_THICKNESS = 2;
-BACK_PLATE_THICKNESS = 5;
-PLATE_SIZE = 30;
-HOLE_DISTANCE = 20;
+FILAMENT_FRONT_PLATE_THICKNESS = 2;
+FILAMENT_BACK_PLATE_THICKNESS = 5;
+FILAMENT_PLATE_SIZE = 30;
+FILAMENT_HOLE_DISTANCE = 20;
 CAP_HEIGHT = 8.5;
-SCREW_RADIUS = 4.1 / 2;
-NUT_RADIUS = 6.9 / 2;
+SCREW_RADIUS = (4 + 0.1) / 2;
+NUT_RADIUS = (6.9 + 0.1) / 2;
 NUT_THICKNESS = 3;
 FILAMENT_HOLE_BOTTOM_RADIUS = 3;
 FILAMENT_HOLE_TOP_RADIUS = 2;
 
+SPOOL_PLATE_SIZE = 40;
+SPOOL_HOLE_DISTANCE = 30;
+SPOOL_BACK_PLATE_THICKNESS = FILAMENT_FRONT_PLATE_THICKNESS;
+SPOOL_FRONT_PLATE_THICKNESS = FILAMENT_BACK_PLATE_THICKNESS;
+SPOOL_ROD_RADIUS = 21 / 2;
+SPOOL_ROD_MOUNT_RADIUS = 30 / 2;
+SPOOL_ROD_MOUNT_LENGTH = 20;
+SPOOL_EXTRA_STRENGTH_WIDTH = 15;
+SPOOL_EXTRA_STRENGTH_THICKNESS = 5;
+SPOOL_EXTRA_STRENGTH_LENGTH = 10;
 
 module hole(h, r, center, fn=100)
 {
@@ -16,49 +26,83 @@ module hole(h, r, center, fn=100)
    cylinder(h=h,r=r*fudge,center=center,$fn=fn);
 }
 
-module ScrewHoles(radius, fn=100)
+module ScrewHoles(radius, distance, fn=100)
 {
-	translate([HOLE_DISTANCE / 2, HOLE_DISTANCE / 2, 0])
+	translate([distance / 2, distance / 2, 0])
 	hole(h=10, r=radius, center=true, fn=fn);
-	translate([-HOLE_DISTANCE / 2, HOLE_DISTANCE / 2, 0])
+	translate([-distance / 2, distance / 2, 0])
 	hole(h=10, r=radius, center=true, fn=fn);
-	translate([-HOLE_DISTANCE / 2, -HOLE_DISTANCE / 2, 0])
+	translate([-distance / 2, -distance / 2, 0])
 	hole(h=10, r=radius, center=true, fn=fn);
-	translate([HOLE_DISTANCE / 2, -HOLE_DISTANCE / 2, 0])
+	translate([distance / 2, -distance / 2, 0])
 	hole(h=10, r=radius, center=true, fn=fn);
 }
 
-module FrontPlate()
+module FilamentFrontPlate()
 {
 	rotate([180, 0, 0])
 	{
 		difference()
 		{
-			cube([PLATE_SIZE, PLATE_SIZE, FRONT_PLATE_THICKNESS], center=true);
+			cube([FILAMENT_PLATE_SIZE, FILAMENT_PLATE_SIZE, FILAMENT_FRONT_PLATE_THICKNESS], center=true);
 			hole(h=10, r=5, center=true);
-			ScrewHoles(SCREW_RADIUS);
+			ScrewHoles(SCREW_RADIUS, FILAMENT_HOLE_DISTANCE);
 		}
-		translate([0, 0, -CAP_HEIGHT - FRONT_PLATE_THICKNESS / 2])
+		translate([0, 0, -CAP_HEIGHT - FILAMENT_FRONT_PLATE_THICKNESS / 2])
 		import("TFF_Female_Flat_v2.1.stl");
 	}
 }
 
-module BackPlate()
+module FilamentBackPlate()
 {
 	difference()
 	{
-		cube([PLATE_SIZE, PLATE_SIZE, BACK_PLATE_THICKNESS], center=true);
-		ScrewHoles(SCREW_RADIUS);
-		translate([0, 0, -NUT_THICKNESS + 10 / 2 + BACK_PLATE_THICKNESS / 2])
-		ScrewHoles(NUT_RADIUS, fn=6);
+		cube([FILAMENT_PLATE_SIZE, FILAMENT_PLATE_SIZE, FILAMENT_BACK_PLATE_THICKNESS], center=true);
+		ScrewHoles(SCREW_RADIUS, FILAMENT_HOLE_DISTANCE);
+		translate([0, 0, -NUT_THICKNESS + 10 / 2 + FILAMENT_BACK_PLATE_THICKNESS / 2])
+		ScrewHoles(NUT_RADIUS, FILAMENT_HOLE_DISTANCE, fn=6);
 		cylinder(
-			h = BACK_PLATE_THICKNESS + 0.01, 
+			h = FILAMENT_BACK_PLATE_THICKNESS + 0.01, 
 			r1 = FILAMENT_HOLE_TOP_RADIUS,
 			r2 = FILAMENT_HOLE_BOTTOM_RADIUS, 
 			center = true,
 			$fn=100
 		);
 	}
+}
+
+module SpoolHolderBackPlate()
+{
+	difference()
+	{
+		cube([SPOOL_PLATE_SIZE, SPOOL_PLATE_SIZE, SPOOL_BACK_PLATE_THICKNESS], center=true);
+		ScrewHoles(SCREW_RADIUS, SPOOL_HOLE_DISTANCE);
+	}
+}
+
+module SpoolHolderFrontPlate()
+{
+	difference()
+	{
+		cube([SPOOL_PLATE_SIZE, SPOOL_PLATE_SIZE, SPOOL_FRONT_PLATE_THICKNESS], center=true);
+		ScrewHoles(SCREW_RADIUS, SPOOL_HOLE_DISTANCE);
+		translate([0, 0, 10 / 2 + SPOOL_FRONT_PLATE_THICKNESS / 2 - NUT_THICKNESS])
+		ScrewHoles(NUT_RADIUS, SPOOL_HOLE_DISTANCE, fn=6);
+	}
+	difference()
+	{
+		translate([0, 0, SPOOL_FRONT_PLATE_THICKNESS / 2])
+		cylinder(h=SPOOL_ROD_MOUNT_LENGTH, r=SPOOL_ROD_MOUNT_RADIUS, $fn=100);
+		translate([0.1, 0, SPOOL_FRONT_PLATE_THICKNESS / 2])
+		cylinder(h=SPOOL_ROD_MOUNT_LENGTH + 0.1, r=SPOOL_ROD_RADIUS, $fn=100);
+		translate([-SPOOL_ROD_MOUNT_RADIUS, 0, SPOOL_FRONT_PLATE_THICKNESS / 2])
+		cube([SPOOL_ROD_MOUNT_RADIUS * 2, SPOOL_ROD_MOUNT_RADIUS, SPOOL_ROD_MOUNT_LENGTH + 0.1]);
+	}
+	
+	translate([SPOOL_EXTRA_STRENGTH_WIDTH /2 - SPOOL_EXTRA_STRENGTH_THICKNESS / 2, -SPOOL_PLATE_SIZE / 2, SPOOL_FRONT_PLATE_THICKNESS / 2])
+	cube([SPOOL_EXTRA_STRENGTH_THICKNESS, SPOOL_EXTRA_STRENGTH_LENGTH, SPOOL_ROD_MOUNT_LENGTH]);
+	translate([-SPOOL_EXTRA_STRENGTH_WIDTH /2 - SPOOL_EXTRA_STRENGTH_THICKNESS / 2, -SPOOL_PLATE_SIZE / 2, SPOOL_FRONT_PLATE_THICKNESS / 2])
+	cube([SPOOL_EXTRA_STRENGTH_THICKNESS, SPOOL_EXTRA_STRENGTH_LENGTH, SPOOL_ROD_MOUNT_LENGTH]);
 }
 
 module ClosedCap()
@@ -73,7 +117,9 @@ module ClosedCap()
 }
 
 // Enable one of these
-//FrontPlate();
-//BackPlate();
-ClosedCap();
+//FilamentFrontPlate();
+//FilamentBackPlate();
+//ClosedCap();
+//SpoolHolderBackPlate();
+SpoolHolderFrontPlate();
 
