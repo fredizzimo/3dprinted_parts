@@ -30,14 +30,17 @@ module ScrewHoles(radius, fn=100)
 
 module FrontPlate()
 {
-	difference()
+	rotate([180, 0, 0])
 	{
-		cube([PLATE_SIZE, PLATE_SIZE, FRONT_PLATE_THICKNESS], center=true);
-		hole(h=10, r=5, center=true);
-		ScrewHoles(SCREW_RADIUS);
+		difference()
+		{
+			cube([PLATE_SIZE, PLATE_SIZE, FRONT_PLATE_THICKNESS], center=true);
+			hole(h=10, r=5, center=true);
+			ScrewHoles(SCREW_RADIUS);
+		}
+		translate([0, 0, -CAP_HEIGHT - FRONT_PLATE_THICKNESS / 2])
+		import("TFF_Female_Flat_v2.1.stl");
 	}
-	translate([0, 0, -CAP_HEIGHT - FRONT_PLATE_THICKNESS / 2])
-	import("TFF_Female_Flat_v2.1.stl");
 }
 
 module BackPlate()
@@ -46,18 +49,19 @@ module BackPlate()
 	{
 		cube([PLATE_SIZE, PLATE_SIZE, BACK_PLATE_THICKNESS], center=true);
 		ScrewHoles(SCREW_RADIUS);
-		translate([0, 0, NUT_THICKNESS -10 / 2 - BACK_PLATE_THICKNESS / 2])
+		translate([0, 0, -NUT_THICKNESS + 10 / 2 + BACK_PLATE_THICKNESS / 2])
 		ScrewHoles(NUT_RADIUS, fn=6);
 		cylinder(
 			h = BACK_PLATE_THICKNESS + 0.01, 
-			r1 = FILAMENT_HOLE_BOTTOM_RADIUS,
-			r2 = FILAMENT_HOLE_TOP_RADIUS, 
+			r1 = FILAMENT_HOLE_TOP_RADIUS,
+			r2 = FILAMENT_HOLE_BOTTOM_RADIUS, 
 			center = true,
 			$fn=100
 		);
 	}
 }
 
-//FrontPlate();
-BackPlate();
+// Enable one of these
+FrontPlate();
+//BackPlate();
 
