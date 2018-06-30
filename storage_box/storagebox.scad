@@ -61,7 +61,19 @@ module BackPlate()
 	}
 }
 
+module ClosedCap()
+{
+	translate([0, 0, 15.5])
+	rotate([180, 0, 0])
+	import("TFF_Male_Flat_v2.1.stl");
+
+	CAP_WALL_HEIGHT = 3;
+	translate([0, 0, CAP_WALL_HEIGHT / 2])
+	cube([8, 8, CAP_WALL_HEIGHT], center=true);
+}
+
 // Enable one of these
-FrontPlate();
+//FrontPlate();
 //BackPlate();
+ClosedCap();
 
