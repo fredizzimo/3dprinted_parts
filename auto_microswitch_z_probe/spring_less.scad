@@ -18,6 +18,9 @@ PROBE_BIG_RADIUS = 8.5;
 PROBE_LENGTH = 33.5;
 PROBE_HOLDER_LENGTH = 12;
 PROBE_BOTTOM_WIDTH = 20;
+PROBE_TOP_WIDTH = 20;
+
+PROBE_SLOT_WIDTH = PROBE_BIG_RADIUS * 2 + 1;
 
 //TODO: Solve the wavy short line
 //Front and top can have the same long straight line
@@ -71,7 +74,7 @@ module probe()
 			]);
 			difference()
 			{
-				cylinder(r=PROBE_BIG_RADIUS, h=PROBE_WIDTH, center=true);
+				#cylinder(r=PROBE_BIG_RADIUS, h=PROBE_WIDTH, center=true);
 				translate([-50, -100 + 1.8, -0.1 - PROBE_WIDTH / 2])
 				cube([100, 100, PROBE_WIDTH + 0.2]);
 				translate([-100, -50, -0.1 - PROBE_WIDTH / 2])
@@ -126,25 +129,38 @@ module mount()
 		cube([TOGGLE_WIDTH + MOUNT_WALL_THICKNESS + MOUNT_EXTRA_SPACE, MOUNT_WIDTH, TOGGLE_HEIGHT + 2*MOUNT_WALL_THICKNESS + MOUNT_EXTRA_SPACE]);
 		translate([-0.1 - MOUNT_EXTRA_SPACE, -0.1, 0])
 		cube([TOGGLE_WIDTH+MOUNT_EXTRA_SPACE + 0.1, MOUNT_WIDTH + 0.2, TOGGLE_HEIGHT + MOUNT_EXTRA_SPACE]);
+
+		translate([-MOUNT_WALL_THICKNESS-0.1, MOUNT_WIDTH / 2 - PROBE_SLOT_WIDTH / 2, -MOUNT_WALL_THICKNESS-0.1])
+		cube([TOGGLE_WIDTH + MOUNT_EXTRA_SPACE + 0.1, PROBE_SLOT_WIDTH, MOUNT_WALL_THICKNESS + 0.2]);
 		
 	}
 	difference()
 	{
-		pole_height = MOUNT_HEIGHT - (TOGGLE_HEIGHT + 2*MOUNT_WALL_THICKNESS + MOUNT_EXTRA_SPACE);
-		translate([0, MOUNT_WIDTH / 2 - MOUNT_MIDDLE_THICKNESS / 2, -pole_height - MOUNT_WALL_THICKNESS])
-		cube([TOGGLE_WIDTH + MOUNT_WALL_THICKNESS, MOUNT_MIDDLE_THICKNESS, pole_height]);
+		pole_height = MOUNT_HEIGHT - (TOGGLE_HEIGHT + MOUNT_WALL_THICKNESS + MOUNT_EXTRA_SPACE);
+		translate([PROBE_WIDTH + MOUNT_EXTRA_SPACE, MOUNT_WIDTH / 2 - MOUNT_MIDDLE_THICKNESS / 2, -pole_height])
+		cube([MOUNT_WALL_THICKNESS + (TOGGLE_WIDTH - PROBE_WIDTH), MOUNT_MIDDLE_THICKNESS, pole_height]);
 		
 		translate([-0.1, MOUNT_WIDTH / 2, TOGGLE_SLOT_HEIGHT - PROBE_BIG_RADIUS])
 		rotate([0, 90, 0])
 		hole(r=MOUNT_HOLE_RADIUS, h = TOGGLE_WIDTH + MOUNT_WALL_THICKNESS + MOUNT_EXTRA_SPACE + 0.2);
 	}
+	//translate([-0.1, MOUNT_WIDTH / 2, TOGGLE_SLOT_HEIGHT - PROBE_BIG_RADIUS])
+	//rotate([0, 90, 0])
+	//hole(r=PROBE_BIG_RADIUS, h = TOGGLE_WIDTH + MOUNT_WALL_THICKNESS + MOUNT_EXTRA_SPACE + 0.2);
 }
 
-//translate([0, 0, -5])
-//import("Probe_1013_Toggle.stl");
+module original_probe()
+{
+	translate([TOGGLE_WIDTH / 2, 0, -TOGGLE_SLOT_HEIGHT + MOUNT_HOLE_RADIUS])
+	rotate([0, 90, 0])
+	translate([0, MOUNT_WIDTH / 2, 0])
+	rotate([0, 0, 90])
+	import("Probe_1013_Toggle.stl");
+}
 
 toggle();
-//mount();
+mount();
+original_probe();
 //translate([-7/2, TOGGLE_LENGTH / 2 + TOGGLE_SLOT_WIDTH / 2, 0])
 //rotate([180, 0, 0])
-//probe();
+probe();
