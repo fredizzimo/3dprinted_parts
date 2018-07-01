@@ -1,7 +1,6 @@
 TOGGLE_LENGTH = 50;
 TOGGLE_HEIGHT = 7;
 TOGGLE_WIDTH = 6;
-PROBE_WIDTH = 5;
 TOGGLE_SLOT_HEIGHT = 5;
 TOGGLE_SLOT_WIDTH = 14;
 TOGGLE_SLOT_DISTANCE = 1.5;
@@ -13,14 +12,12 @@ MOUNT_MIDDLE_THICKNESS = 10;
 MOUNT_EXTRA_SPACE=0.1;
 MOUNT_HOLE_RADIUS = 3.1 / 2;
 
-PROBE_SMALL_RADIUS = 7;
-PROBE_BIG_RADIUS = 8.5;
-PROBE_LENGTH = 33.5;
-PROBE_HOLDER_LENGTH = 12;
-PROBE_BOTTOM_WIDTH = 20;
-PROBE_TOP_WIDTH = 20;
-
-PROBE_SLOT_WIDTH = PROBE_BIG_RADIUS * 2 + 1;
+PROBE_WIDTH = 5;
+PROBE_ACTIVATION_AREA_RADIUS = 8.5;
+PROBE_ACTIVE_FLAT_AREA_WIDTH = 10;
+PROBE_INACTIVE_FLAT_AREA_WIDTH = 3;
+PROBE_HEIGHT = 33;
+PROBE_SLOT_WIDTH = PROBE_ACTIVATION_AREA_RADIUS * 2 + 1;
 
 //TODO: Solve the wavy short line
 //Front and top can have the same long straight line
@@ -49,76 +46,33 @@ module toggle()
 
 module probe()
 {
-	$fn=300;
+	$fn = 100;
 	difference()
 	{
 		union()
 		{
-			cylinder(r=PROBE_SMALL_RADIUS, h=PROBE_WIDTH, center=true);
-			translate([4, -0.9, -PROBE_WIDTH / 2])
-			cube([3.6, 3, PROBE_WIDTH]);
-			translate([6.95, 1.45, 0])
-			cylinder(r=1.4, h=PROBE_WIDTH, center=true);
-			translate([-PROBE_SMALL_RADIUS, PROBE_BIG_RADIUS - PROBE_SMALL_RADIUS, -PROBE_WIDTH / 2])
-			cube([PROBE_SMALL_RADIUS, PROBE_SMALL_RADIUS, PROBE_WIDTH]);
-			probe_bottom_length = PROBE_LENGTH - PROBE_SMALL_RADIUS;
-			probe_left_edge = -17;
-			translate([0, 0, -PROBE_WIDTH / 2])
-			linear_extrude(PROBE_WIDTH)
-			#polygon([
-				[-PROBE_SMALL_RADIUS,0], 
-				[probe_left_edge, -(probe_bottom_length - PROBE_HOLDER_LENGTH)],
-				[probe_left_edge, -probe_bottom_length], 
-				[probe_left_edge + PROBE_BOTTOM_WIDTH, -probe_bottom_length],
-				[probe_left_edge + PROBE_BOTTOM_WIDTH, 0],
-			]);
 			difference()
 			{
-				#cylinder(r=PROBE_BIG_RADIUS, h=PROBE_WIDTH, center=true);
-				translate([-50, -100 + 1.8, -0.1 - PROBE_WIDTH / 2])
-				cube([100, 100, PROBE_WIDTH + 0.2]);
-				translate([-100, -50, -0.1 - PROBE_WIDTH / 2])
-				cube([100, 100, PROBE_WIDTH + 0.2]);
-					
+				cylinder(h = PROBE_WIDTH, r = PROBE_ACTIVATION_AREA_RADIUS, center=true);
+				translate([(PROBE_ACTIVATION_AREA_RADIUS + 0.1) / 2, 0, 0])
+				cube([PROBE_ACTIVATION_AREA_RADIUS + 0.1, 2 * PROBE_ACTIVATION_AREA_RADIUS + 0.1, PROBE_WIDTH + 0.1], center=true);
 			}
+			translate([-PROBE_ACTIVATION_AREA_RADIUS / 2, -PROBE_ACTIVE_FLAT_AREA_WIDTH / 2, 0])
+			cube([PROBE_ACTIVATION_AREA_RADIUS, PROBE_ACTIVE_FLAT_AREA_WIDTH, PROBE_WIDTH], center=true);
+
+			translate([PROBE_INACTIVE_FLAT_AREA_WIDTH / 2, PROBE_ACTIVATION_AREA_RADIUS / 2, 0])
+			cube([PROBE_INACTIVE_FLAT_AREA_WIDTH, PROBE_ACTIVATION_AREA_RADIUS, PROBE_WIDTH], center=true);
+			probe_top_width = PROBE_ACTIVE_FLAT_AREA_WIDTH + (PROBE_ACTIVATION_AREA_RADIUS - TOGGLE_SLOT_HEIGHT);
+			translate([
+				(PROBE_HEIGHT - PROBE_ACTIVATION_AREA_RADIUS) / 2,
+				-probe_top_width / 2 + PROBE_ACTIVATION_AREA_RADIUS - TOGGLE_SLOT_HEIGHT - MOUNT_WALL_THICKNESS / 2,
+				0])
+			cube([PROBE_HEIGHT - PROBE_ACTIVATION_AREA_RADIUS, probe_top_width - MOUNT_WALL_THICKNESS, PROBE_WIDTH], center=true);
 		}
-		cutout=3.5;
-		translate([cutout, cutout, -PROBE_WIDTH / 2 - 0.1])
-		cube([10, 10, PROBE_WIDTH + 0.2]);
-
-		translate([cutout + 0.1, cutout + 0.1, 0])
-		cylinder(r=1.25, h=PROBE_WIDTH + 0.2, center=true);
-		
-		r = 1.5;
-		translate([8.35, -1.0])
-		cylinder(r=1.4, h=PROBE_WIDTH + 0.2, center=true);
-
-		//Rounded corner remove
-		translate([7.1, 2.9, -0.1 - PROBE_WIDTH / 2])
-		cube([1, 1, PROBE_WIDTH + 0.2]);
-		translate([4.3, 3.2, -0.1 - PROBE_WIDTH / 2])
-		cube([1, 1, PROBE_WIDTH + 0.2]);
-		translate([3.1, 4.2, -0.1 - PROBE_WIDTH / 2])
-		cube([1, 1, PROBE_WIDTH + 0.2]);
-		translate([2.9, 7.2, -0.1 - PROBE_WIDTH / 2])
-		cube([1, 1, PROBE_WIDTH + 0.2]);
+		translate([-PROBE_ACTIVATION_AREA_RADIUS + TOGGLE_SLOT_HEIGHT / 2, PROBE_ACTIVATION_AREA_RADIUS - TOGGLE_SLOT_HEIGHT / 2, 0])
+		cube([TOGGLE_SLOT_HEIGHT, TOGGLE_SLOT_HEIGHT, PROBE_WIDTH + 0.1], center=true);
+		hole(r = MOUNT_HOLE_RADIUS, h=PROBE_WIDTH + 0.1, center=true);
 	}
-	
-	//Rounded corners
-	translate([7.0, 2.4, 0])
-	cylinder(r=1.10, h=PROBE_WIDTH, center=true);
-	
-	translate([5.3, 2.9, 0])
-	cylinder(r=0.6, h=PROBE_WIDTH, center=true);
-	translate([3.15, 5.2, 0])
-	cylinder(r=0.35, h=PROBE_WIDTH, center=true);
-
-	translate([2.6, 4.4, -PROBE_WIDTH / 2])
-	rotate([0, 0, 34])
-	cube([0.9, 0.9, PROBE_WIDTH]);
-
-	translate([2.4, 7, 0])
-	cylinder(r=1.10, h=PROBE_WIDTH, center=true);
 }
 
 module mount()
@@ -140,27 +94,33 @@ module mount()
 		translate([PROBE_WIDTH + MOUNT_EXTRA_SPACE, MOUNT_WIDTH / 2 - MOUNT_MIDDLE_THICKNESS / 2, -pole_height])
 		cube([MOUNT_WALL_THICKNESS + (TOGGLE_WIDTH - PROBE_WIDTH), MOUNT_MIDDLE_THICKNESS, pole_height]);
 		
-		translate([-0.1, MOUNT_WIDTH / 2, TOGGLE_SLOT_HEIGHT - PROBE_BIG_RADIUS])
+		translate([-0.1, MOUNT_WIDTH / 2, TOGGLE_SLOT_HEIGHT - PROBE_ACTIVATION_AREA_RADIUS])
 		rotate([0, 90, 0])
 		hole(r=MOUNT_HOLE_RADIUS, h = TOGGLE_WIDTH + MOUNT_WALL_THICKNESS + MOUNT_EXTRA_SPACE + 0.2);
 	}
-	//translate([-0.1, MOUNT_WIDTH / 2, TOGGLE_SLOT_HEIGHT - PROBE_BIG_RADIUS])
-	//rotate([0, 90, 0])
-	//hole(r=PROBE_BIG_RADIUS, h = TOGGLE_WIDTH + MOUNT_WALL_THICKNESS + MOUNT_EXTRA_SPACE + 0.2);
 }
 
 module original_probe()
 {
-	translate([TOGGLE_WIDTH / 2, 0, -TOGGLE_SLOT_HEIGHT + MOUNT_HOLE_RADIUS])
-	rotate([0, 90, 0])
-	translate([0, MOUNT_WIDTH / 2, 0])
 	rotate([0, 0, 90])
 	import("Probe_1013_Toggle.stl");
 }
 
-toggle();
-mount();
-original_probe();
-//translate([-7/2, TOGGLE_LENGTH / 2 + TOGGLE_SLOT_WIDTH / 2, 0])
-//rotate([180, 0, 0])
-probe();
+module assembly()
+{
+	translate([0, -TOGGLE_LENGTH / 2, TOGGLE_SLOT_HEIGHT - MOUNT_HOLE_RADIUS])
+	{
+		translate([0, -5, 0])
+		toggle();
+		mount();
+	}
+
+	rotate([90, 0, 0])
+	translate([PROBE_WIDTH / 2, 0, 0])
+	rotate([0, 90, 0])
+	{
+		probe();
+	}
+}
+
+assembly();
