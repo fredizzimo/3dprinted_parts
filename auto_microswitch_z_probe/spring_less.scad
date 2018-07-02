@@ -1,25 +1,27 @@
-TOGGLE_LENGTH = 50;
+PROBE_ACTIVE_FLAT_AREA_WIDTH = 8;
+PROBE_INACTIVE_FLAT_AREA_WIDTH = 3;
+PROBE_ACTIVATION_AREA_RADIUS = 8.5;
+
+TOGGLE_LENGTH = 80;
 TOGGLE_HEIGHT = 7;
 TOGGLE_WIDTH = 6;
 TOGGLE_SLOT_HEIGHT = 5;
-TOGGLE_SLOT_WIDTH = 14;
 TOGGLE_SLOT_DISTANCE = 1.5;
+TOGGLE_SLOT_WIDTH = PROBE_ACTIVE_FLAT_AREA_WIDTH + PROBE_ACTIVATION_AREA_RADIUS;
 
-MOUNT_EXTRA_SPACE=3;
+MOUNT_EXTRA_SPACE=0.1;
 MOUNT_HEIGHT = 15 + MOUNT_EXTRA_SPACE;
-MOUNT_WIDTH = TOGGLE_SLOT_WIDTH * 2 + TOGGLE_SLOT_DISTANCE + 2 * 10;
+MOUNT_WIDTH = 60;
 MOUNT_WALL_THICKNESS = 1;
 MOUNT_MIDDLE_THICKNESS = 10;
 MOUNT_HOLE_RADIUS = 3.1 / 2;
 
 PROBE_WIDTH = 5;
-PROBE_ACTIVATION_AREA_RADIUS = 8.5;
-PROBE_ACTIVE_FLAT_AREA_WIDTH = PROBE_ACTIVATION_AREA_RADIUS;
-PROBE_INACTIVE_FLAT_AREA_WIDTH = 3;
 PROBE_HEIGHT = 33;
-//PROBE_SLOT_WIDTH = PROBE_ACTIVATION_AREA_RADIUS * 2 + 1;
 PROBE_SLOT_WIDTH= TOGGLE_SLOT_WIDTH * 2 + TOGGLE_SLOT_DISTANCE;
 PROBE_ACTIVATION_CIRCLE_RADIUS = 2;
+PROBE_HOLE_RADIUS = 3.3 / 2;
+
 
 //TODO: Solve the wavy short line
 //Front and top can have the same long straight line
@@ -83,11 +85,25 @@ module probe()
 		}
 		translate([-PROBE_ACTIVATION_AREA_RADIUS + TOGGLE_SLOT_HEIGHT / 2, PROBE_ACTIVATION_AREA_RADIUS - TOGGLE_SLOT_HEIGHT / 2, 0])
 		cube([TOGGLE_SLOT_HEIGHT, TOGGLE_SLOT_HEIGHT, PROBE_WIDTH + 0.1], center=true);
-		hole(r = MOUNT_HOLE_RADIUS, h=PROBE_WIDTH + 0.1, center=true);
+		hole(r = PROBE_HOLE_RADIUS, h=PROBE_WIDTH + 0.1, center=true);
 
 		dist = sin(45) * (PROBE_ACTIVATION_AREA_RADIUS - TOGGLE_SLOT_HEIGHT + PROBE_ACTIVATION_CIRCLE_RADIUS);
 		translate([-dist, dist, 0])
 		hole(r = PROBE_ACTIVATION_CIRCLE_RADIUS, h = PROBE_WIDTH + 0.1, center=true);
+	}
+}
+
+module probe_pole()
+{
+	difference()
+	{
+		pole_height = MOUNT_HEIGHT - (TOGGLE_HEIGHT + MOUNT_WALL_THICKNESS * 2 + MOUNT_EXTRA_SPACE);
+		translate([-MOUNT_WALL_THICKNESS, MOUNT_WIDTH / 2 - MOUNT_MIDDLE_THICKNESS / 2, -pole_height - MOUNT_WALL_THICKNESS])
+		cube([MOUNT_WALL_THICKNESS, MOUNT_MIDDLE_THICKNESS, pole_height]);
+		
+		translate([-0.1 - MOUNT_WALL_THICKNESS, MOUNT_WIDTH / 2, TOGGLE_SLOT_HEIGHT - PROBE_ACTIVATION_AREA_RADIUS])
+		rotate([0, 90, 0])
+		hole(r=MOUNT_HOLE_RADIUS, h = TOGGLE_WIDTH + MOUNT_WALL_THICKNESS + MOUNT_EXTRA_SPACE + 0.2);
 	}
 }
 
@@ -103,18 +119,10 @@ module mount(invisible_front=false)
 
 		translate([-0.1, MOUNT_WIDTH / 2 - PROBE_SLOT_WIDTH / 2, -MOUNT_WALL_THICKNESS-0.1])
 		cube([TOGGLE_WIDTH + MOUNT_EXTRA_SPACE + 0.1, PROBE_SLOT_WIDTH, MOUNT_WALL_THICKNESS + 0.2]);
-		
 	}
-	difference()
-	{
-		pole_height = MOUNT_HEIGHT - (TOGGLE_HEIGHT + MOUNT_WALL_THICKNESS * 2 + MOUNT_EXTRA_SPACE);
-		translate([-MOUNT_WALL_THICKNESS, MOUNT_WIDTH / 2 - MOUNT_MIDDLE_THICKNESS / 2, -pole_height - MOUNT_WALL_THICKNESS])
-		cube([MOUNT_WALL_THICKNESS, MOUNT_MIDDLE_THICKNESS, pole_height]);
-		
-		translate([-0.1 - MOUNT_WALL_THICKNESS, MOUNT_WIDTH / 2, TOGGLE_SLOT_HEIGHT - PROBE_ACTIVATION_AREA_RADIUS])
-		rotate([0, 90, 0])
-		hole(r=MOUNT_HOLE_RADIUS, h = TOGGLE_WIDTH + MOUNT_WALL_THICKNESS + MOUNT_EXTRA_SPACE + 0.2);
-	}
+	probe_pole();	
+	translate([TOGGLE_WIDTH + MOUNT_WALL_THICKNESS + MOUNT_EXTRA_SPACE, 0, 0])
+	probe_pole();
 }
 
 module original_probe()
@@ -125,10 +133,11 @@ module original_probe()
 
 module assembly(angle, toggle_pos, invisible_front)
 {
-	translate([0, -MOUNT_WIDTH / 2, TOGGLE_SLOT_HEIGHT - MOUNT_HOLE_RADIUS])
+	translate([0, 0, TOGGLE_SLOT_HEIGHT - MOUNT_HOLE_RADIUS])
 	{
-		translate([0, toggle_pos, 0])
+		translate([0, -TOGGLE_LENGTH / 2 + toggle_pos, 0])
 		toggle();
+		translate([0, -MOUNT_WIDTH / 2, 0])
 		mount(invisible_front);
 	}
 
@@ -142,4 +151,7 @@ module assembly(angle, toggle_pos, invisible_front)
 	}
 }
 
-assembly(25, 1, false);
+invisible_front_wall = true;
+assembly(90, -7, invisible_front_wall);
+//assembly(0, 7, invisible_front_wall);
+//assembly(45, 0, invisible_front_wall);
