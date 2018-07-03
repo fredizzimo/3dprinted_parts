@@ -1,0 +1,12 @@
+name: freecad
+channels:
+  - freecad
+  - cad
+  - conda-forge
+  - defaults
+dependencies:
+  - python = 3.6
+  - freecad
+  - pip:
+    - cadquery==1.2.0
+    - cqparts==0.2.1
