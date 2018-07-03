@@ -1,6 +1,6 @@
-PROBE_ACTIVE_FLAT_AREA_WIDTH = 8;
-PROBE_INACTIVE_FLAT_AREA_WIDTH = 3;
 PROBE_ACTIVATION_AREA_RADIUS = 8.5;
+PROBE_ACTIVE_FLAT_AREA_WIDTH = PROBE_ACTIVATION_AREA_RADIUS;
+PROBE_INACTIVE_FLAT_AREA_WIDTH = 2;
 
 TOGGLE_LENGTH = 80;
 TOGGLE_HEIGHT = 7;
@@ -64,17 +64,15 @@ module probe()
 	{
 		union()
 		{
-			difference()
-			{
-				cylinder(h = PROBE_WIDTH, r = PROBE_ACTIVATION_AREA_RADIUS, center=true);
-				translate([(PROBE_ACTIVATION_AREA_RADIUS + 0.1) / 2, 0, 0])
-				cube([PROBE_ACTIVATION_AREA_RADIUS + 0.1, 2 * PROBE_ACTIVATION_AREA_RADIUS + 0.1, PROBE_WIDTH + 0.1], center=true);
-			}
+			cylinder(h = PROBE_WIDTH, r = PROBE_ACTIVATION_AREA_RADIUS, center=true);
 			translate([-PROBE_ACTIVATION_AREA_RADIUS / 2, -PROBE_ACTIVE_FLAT_AREA_WIDTH / 2, 0])
 			cube([PROBE_ACTIVATION_AREA_RADIUS, PROBE_ACTIVE_FLAT_AREA_WIDTH, PROBE_WIDTH], center=true);
 
 			translate([PROBE_INACTIVE_FLAT_AREA_WIDTH / 2, PROBE_ACTIVATION_AREA_RADIUS / 2, 0])
 			cube([PROBE_INACTIVE_FLAT_AREA_WIDTH, PROBE_ACTIVATION_AREA_RADIUS, PROBE_WIDTH], center=true);
+
+			translate([PROBE_INACTIVE_FLAT_AREA_WIDTH, 0, 0])
+			cylinder(h = PROBE_WIDTH, r = PROBE_ACTIVATION_AREA_RADIUS, center=true);
 			probe_top_width = PROBE_ACTIVE_FLAT_AREA_WIDTH + (PROBE_ACTIVATION_AREA_RADIUS - TOGGLE_SLOT_HEIGHT);
 			translate([
 				(PROBE_HEIGHT - PROBE_ACTIVATION_AREA_RADIUS) / 2,
@@ -151,7 +149,7 @@ module assembly(angle, toggle_pos, invisible_front)
 	}
 }
 
-invisible_front_wall = true;
-assembly(90, -7, invisible_front_wall);
-//assembly(0, 7, invisible_front_wall);
+invisible_front_wall = false;
+//assembly(90, -7, invisible_front_wall);
+assembly(0, 7, invisible_front_wall);
 //assembly(45, 0, invisible_front_wall);
