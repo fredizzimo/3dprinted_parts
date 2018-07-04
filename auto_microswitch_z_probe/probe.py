@@ -4,6 +4,19 @@ from cqparts.params import *
 from cqparts.display import display
 
 
+def toLocalVector(self, x=0.0, y=0.0, z=0.0):
+    if type(x) is cq.Workplane:
+        x = x.first().val().Center().x
+    if type(y) is cq.Workplane:
+        y = y.first().val().Center().y
+    if type(z) is cq.Workplane:
+        z = z.first().val().Center().z
+
+    return self.plane.toLocalCoords(cq.Vector( x, y, z))
+
+cq.Workplane.toLocalVector = toLocalVector
+
+
 class Toggle(cp.Part):
     length = PositiveFloat()
     width = PositiveFloat()
@@ -28,12 +41,12 @@ class Toggle(cp.Part):
 
         right_edge_plane = cq.Workplane("XY")
         right_edge_plane = right_edge_plane.transformed(
-            offset=(
-                right_edge_plane.plane.toLocalCoords(slot_wall.vertices(">X").first().val().Center()).x,
-                right_edge_plane.plane.toLocalCoords(top_wall.vertices("<Y").first().val().Center()).y,
-                right_edge_plane.plane.toLocalCoords(pin.vertices("<Z").first().val().Center()).z))
+            offset=right_edge_plane.toLocalVector(
+                slot_wall.vertices(">X"),
+                top_wall.vertices("<Y"),
+                pin.vertices("<Z")))
         right_edge = right_edge_plane.rect(
-            right_edge_plane.plane.toLocalCoords(top_wall.vertices(">X").first().val().Center()).x,
+            right_edge_plane.toLocalVector(top_wall.vertices(">X")).x,
             self.width,
             centered=False).\
             extrude(self.slot_height)
@@ -61,3 +74,4 @@ toggle = Toggle(
 )
 
 display(toggle)
+
