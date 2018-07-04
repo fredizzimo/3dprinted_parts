@@ -11,6 +11,7 @@ class Toggle(cp.Part):
     pin_width = PositiveFloat()
     slot_height = PositiveFloat()
     slot_width = PositiveFloat()
+    chamfer = PositiveFloat()
 
     def make(self):
         pin = cq.Workplane("XY").box(self.pin_width, self.slot_width, self.slot_height)
@@ -26,7 +27,6 @@ class Toggle(cp.Part):
             extrude(self.width - self.slot_width, combine=False)
 
         right_edge_plane = cq.Workplane("XY")
-        print(right_edge_plane.plane.toLocalCoords(slot_wall.vertices(">X").first().val().Center()).x)
         right_edge_plane = right_edge_plane.transformed(
             offset=(
                 right_edge_plane.plane.toLocalCoords(slot_wall.vertices(">X").first().val().Center()).x,
@@ -38,13 +38,16 @@ class Toggle(cp.Part):
             centered=False).\
             extrude(self.slot_height)
 
+        pin = pin.edges("<Z and |Y").fillet(self.pin_width/2 - 0.0001)
+        pin = pin.edges("<Y and |Z").chamfer(self.chamfer)
+        pin = pin.edges("<Y and >Z").chamfer(self.chamfer)
 
-        pin = pin.edges("<Z").fillet(self.pin_width/2 - 0.0001)
-
-        ret = pin.union(top_wall)
-        ret = ret.union(slot_wall)
+        ret = slot_wall.union(top_wall)
         ret = ret.union(right_edge)
         ret = ret.union(right_edge.mirror(mirrorPlane="YZ"))
+
+        ret = ret.edges().chamfer(self.chamfer)
+        ret = ret.union(pin)
         return ret
 
 toggle = Toggle(
@@ -54,6 +57,7 @@ toggle = Toggle(
     pin_width=1.5,
     slot_width = 5,
     slot_height = 5,
+    chamfer = 0.3
 )
 
 display(toggle)
