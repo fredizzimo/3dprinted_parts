@@ -14,7 +14,28 @@ def toLocalVector(self, x=0.0, y=0.0, z=0.0):
 
     return self.plane.toLocalCoords(cq.Vector( x, y, z))
 
+original_transformed = cq.Workplane.transformed
+
+
+def transformed(self, rotate=(0, 0, 0), offset=(0, 0, 0), origin=None):
+    if origin is not None:
+        x, y, z = origin
+
+        if x is None:
+            x = self.plane.origin.x
+        if y is None:
+            y = self.plane.origin.y
+        if z is None:
+            z = self.plane.origin.z
+
+        local = self.toLocalVector(x, y, z)
+        xo, yo, zo = offset
+        offset = (xo + local.x, yo + local.y, zo + local.z)
+
+    return original_transformed(self, rotate, offset)
+
 cq.Workplane.toLocalVector = toLocalVector
+cq.Workplane.transformed = transformed
 
 
 class Toggle(cp.Part):
@@ -63,15 +84,103 @@ class Toggle(cp.Part):
         ret = ret.union(pin)
         return ret
 
+
+class Mount(cp.Part):
+    width = PositiveFloat()
+    wall_thickness = PositiveFloat()
+    toggle_width = PositiveFloat()
+    toggle_height = PositiveFloat()
+    slot_width = PositiveFloat()
+    extra_space = PositiveFloat()
+    bracket_width = PositiveFloat()
+    bracket_height = PositiveFloat()
+    mount_hole_diameter = PositiveFloat()
+    probe_hole_distance = PositiveFloat()
+
+    def make(self):
+        top = cq.Workplane("XY").box(
+            self.width,
+            self.toggle_width + self.extra_space,
+            self.wall_thickness)
+        back = (
+            top.faces(">Z").workplane(invert=True).
+            transformed(
+                origin=( None, top.vertices(">Y"), None ),
+                offset=(0, -self.wall_thickness, 0)
+            ).
+            box(
+                self.width,
+                self.wall_thickness,
+                self.toggle_height + self.extra_space + 2*self.wall_thickness,
+                centered=[True, False, False],
+                combine=False)
+        )
+        front = back.mirror(mirrorPlane="XZ").translate((0,0,0))
+        left_bottom = (
+            back.faces("<Z").workplane(invert=True).
+            transformed(
+                origin=(front.vertices("<X"), front.vertices(">Y"), None),
+            ).
+            box(
+                self.slot_width,
+                self.toggle_width + self.extra_space,
+                self.wall_thickness,
+                combine=False,
+                centered=(False, False, False)
+            )
+        )
+        right_bottom = left_bottom.mirror(mirrorPlane="YZ")
+
+        front_mount_bracket = (
+            front.faces("<Z").workplane().
+            box(
+                self.bracket_width,
+                self.wall_thickness,
+                self.bracket_height,
+                combine=False,
+                centered=(True, True, False)
+            ).
+            faces(">Y").
+            workplane().
+            transformed(
+                origin=(None, None, top.faces("<Z")),
+                offset=(0, -self.extra_space - self.probe_hole_distance, 0)
+            ).
+            hole(self.mount_hole_diameter)
+        )
+
+        rear_mount_bracket = front_mount_bracket.mirror(mirrorPlane="XZ")
+        return (
+            top.union(back).
+            union(front).
+            union(left_bottom).
+            union(right_bottom).
+            union(front_mount_bracket).
+            union(rear_mount_bracket)
+        )
+
+
 toggle = Toggle(
-    length=100,
+    length=80,
     width=6,
-    height = 7,
+    height=7,
     pin_width=1.5,
-    slot_width = 5,
-    slot_height = 5,
-    chamfer = 0.3
+    slot_width=5,
+    slot_height=5,
+    chamfer=0.3
 )
 
-display(toggle)
+mount = Mount(
+    width=60,
+    wall_thickness=1,
+    toggle_width=toggle.width,
+    toggle_height=toggle.height,
+    extra_space=0.1,
+    slot_width=2 * toggle.slot_width + toggle.pin_width,
+    bracket_width=10,
+    bracket_height=10,
+    mount_hole_diameter=3,
+    probe_hole_distance = 12,
+)
 
+display(mount)
