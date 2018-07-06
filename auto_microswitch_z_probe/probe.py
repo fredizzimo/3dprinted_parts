@@ -6,6 +6,10 @@ import cqparts.constraint
 from cqparts.utils.geometry import CoordSystem
 import math
 
+
+#cadquery bugs
+# there's no solid when you create a new workplane, or want to transform for example
+
 def toLocalVector(self, x=0.0, y=0.0, z=0.0):
     if type(x) is cq.Workplane:
         x = x.first().val().Center().x
@@ -207,6 +211,8 @@ class Probe(cp.Part):
     pin_area_width = 5
     probe_circle_radius = 1
     screw_radius = 3 / 2
+    corner_radius = 1
+    chamfer_radius = 0.3
     def make(self):
 
         probe_radius_45 = math.sin(math.pi / 4) * self.probe_circle_radius
@@ -253,6 +259,106 @@ class Probe(cp.Part):
             .circle(self.screw_radius)
             .cutThruAll(positive=True)
         )
+
+        #ret = ret.edges(">X and >Y").fillet(self.corner_radius)
+        #ret = ret.edges(">X and <Y").fillet(self.corner_radius)
+        #ret = ret.edges("<X[1] and <Y[1]").fillet(self.corner_radius)
+
+        ret = (
+            cq.Workplane("XY")
+            .transformed(origin=(0,0,0), offset=(0, 0, 0))
+            .union(ret)
+            #.moveTo(-self.radius + self.pin_area_width - self.probe_circle_radius,
+            #    -self.pin_area_width - self.probe_circle_radius)
+            #.rect(self.probe_circle_radius * 2,
+            #     self.probe_circle_radius * 2, centered=False)
+            #.extrude(10)
+        )
+
+        all_edges = ret.edges("|Z").vals()
+        all_edges_selector = cq.Selector()
+        screw_edges = cq.BoxSelector(
+            (-self.screw_radius - 1 , -self.radius - self.screw_radius - 1, -100),
+            (self.screw_radius + 1 , -self.radius + self.screw_radius + 1, 100),
+        )
+        if False:
+            fillet_edges = cq.BoxSelector(
+                (-self.radius + self.pin_area_width + self.probe_circle_radius, -self.pin_area_width - self.probe_circle_radius, -100),
+                (-self.radius + self.pin_area_width - self.probe_circle_radius-1, -self.pin_area_width + self.probe_circle_radius, 100),
+            )
+
+        else:
+            fillet_edges = cq.BoxSelector(
+                (-100, -self.pin_area_width - self.probe_circle_radius, -100),
+                (100, 100, 100),
+            )
+        if True:
+            extra = 0.4
+            chamfer_edges = cq.BoxSelector(
+                (-self.radius + self.pin_area_width - self.probe_circle_radius - extra,
+                 -self.pin_area_width - self.probe_circle_radius - extra,
+                 -100),
+                (-self.radius + self.pin_area_width - self.probe_circle_radius + self.probe_circle_radius * 2 + extra,
+                 -self.pin_area_width - self.probe_circle_radius + self.probe_circle_radius * 2 + extra,
+                 100),
+                True
+            )
+        else:
+            chamfer_edges = cq.BoxSelector(
+                (-self.radius + self.pin_area_width + self.probe_circle_radius,
+                 -self.pin_area_width - self.probe_circle_radius ,
+                 -100),
+                (-self.radius + self.pin_area_width - self.probe_circle_radius,
+                 -self.pin_area_width + self.probe_circle_radius,
+                 100),
+                True
+            )
+
+        fillet_edges = cq.BoxSelector(
+            (-self.radius + self.pin_area_width + self.probe_circle_radius, -self.pin_area_width - self.probe_circle_radius, -100),
+            (-self.radius + self.pin_area_width - self.probe_circle_radius, -self.pin_area_width + self.probe_circle_radius, 100),
+        )
+
+        selector = (
+            cq.SubtractSelector(
+                all_edges_selector,
+                fillet_edges)
+        )
+        fillet_selector = (
+            cq.SubtractSelector(
+                all_edges_selector,
+                fillet_edges)
+        )
+        chamfer_selector = (
+            cq.SubtractSelector(
+                all_edges_selector,
+                chamfer_edges)
+        )
+        #ret = ret.newObject(pin_edges.filter(ret.edges("|Z").vals())).fillet(self.corner_radius)
+
+        # This
+        ret = ret.newObject(fillet_selector.filter(ret.edges("|Z").vals())).fillet(self.corner_radius)
+
+        #ret = ret.clean()
+        #ret = ret.newObject(chamfer_selector.filter(ret.edges("|Z").vals())).fillet(self.corner_radius)
+
+        #ret = ret.newObject(fillet_selector.filter(ret.edges("not |Z").vals())).chamfer(self.chamfer_radius)
+        #ret = ret.newObject(chamfer_edges.filter(ret.edges("|Z").vals())).fillet(self.corner_radius)
+        #ret = ret.newObject(chamfer_selector.filter(ret.edges("|Z").vals())).fillet(self.corner_radius)
+
+        ret = ret.newObject(chamfer_edges.filter(ret.edges("not |Z").vals())).chamfer(self.chamfer_radius)
+        ret=ret.clean()
+        #ret = ret.newObject(chamfer_selector.filter(ret.edges("not |Z").vals())).chamfer(self.chamfer_radius)
+
+        all_edges = ret.edges("not |Z").vals()
+        curve_edges = chamfer_edges.filter(all_edges)
+        edges = chamfer_selector.filter(all_edges)
+        ret = ret.newObject(edges)
+
+        ret = ret.chamfer(self.chamfer_radius)
+
+
+        #return cq.Workplane("XY").box(10, 10, 10).edges(">Z").chamfer(self.chamfer_radius)
 
 
         return ret
