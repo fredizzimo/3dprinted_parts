@@ -206,11 +206,13 @@ class Probe(cp.Part):
     thickness=5
     pin_area_width = 5
     probe_circle_radius = 1
+    screw_radius = 3 / 2
     def make(self):
 
         probe_radius_45 = math.sin(math.pi / 4) * self.probe_circle_radius
+        wp = cq.Workplane("XY")
         ret = (
-            cq.Workplane("XY")
+            wp
             .hLine(self.active_flat_length)
             .vLine(-self.height)
             .hLine(-self.bottom_width)
@@ -243,7 +245,15 @@ class Probe(cp.Part):
             .vLine(self.probe_circle_radius)
             .close()
             .cutThruAll(positive=True)
+            .workplane()
+            .transformed(
+                origin=(0, 0, 0),
+                offset=(0, -self.radius, 0)
+            )
+            .circle(self.screw_radius)
+            .cutThruAll(positive=True)
         )
+
 
         return ret
 
