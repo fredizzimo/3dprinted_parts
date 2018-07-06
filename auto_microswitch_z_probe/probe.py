@@ -201,18 +201,19 @@ class Mount(cp.Part):
 
 
 class Probe(cp.Part):
-    active_flat_length = 5
-    inactive_flat_length = 2
-    height = 20
-    bottom_width = 10
-    radius = 8.5
-    left_length = height - radius - 3
-    thickness=5
-    pin_area_width = 5
-    probe_circle_radius = 1
-    screw_radius = 3 / 2
-    corner_radius = 1
-    chamfer_radius = 0.3
+    height = PositiveFloat()
+    thickness = PositiveFloat()
+    bottom_width = PositiveFloat()
+    active_flat_length = PositiveFloat()
+    inactive_flat_length = PositiveFloat()
+    radius = PositiveFloat()
+    left_slope_height = PositiveFloat()
+    pin_area_width = PositiveFloat()
+    probe_circle_radius = PositiveFloat()
+    corner_radius = PositiveFloat()
+    chamfer_radius = PositiveFloat()
+    screw_diameter = PositiveFloat()
+
     def make(self):
 
         probe_radius_45 = math.sin(math.pi / 4) * self.probe_circle_radius
@@ -222,7 +223,7 @@ class Probe(cp.Part):
             .hLine(self.active_flat_length)
             .vLine(-self.height)
             .hLine(-self.bottom_width)
-            .vLine(self.left_length)
+            .vLine(self.height - self.radius - self.left_slope_height)
             .lineTo(-self.radius, -self.radius-self.inactive_flat_length)
             .vLine(self.inactive_flat_length)
             .radiusArc((0, 0), self.radius)
@@ -256,7 +257,7 @@ class Probe(cp.Part):
                 origin=(0, 0, 0),
                 offset=(0, -self.radius, 0)
             )
-            .circle(self.screw_radius)
+            .circle(self.screw_diameter / 2)
             .cutThruAll(positive=True)
         )
 
@@ -342,5 +343,18 @@ class Assembly(cp.Assembly):
 
 #assembly = Assembly()
 #display(assembly)
-probe = Probe()
+probe = Probe(
+    height=20,
+    thickness=5,
+    bottom_width=10,
+    active_flat_length=5,
+    inactive_flat_length=2,
+    radius=8.5,
+    left_slope_height=3,
+    pin_area_width=5,
+    probe_circle_radius=1,
+    corner_radius=1,
+    chamfer_radius=0.3,
+    screw_diameter=3,
+)
 display(probe)
