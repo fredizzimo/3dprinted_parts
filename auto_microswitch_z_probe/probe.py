@@ -2,7 +2,8 @@ import cadquery as cq
 import cqparts as cp
 from cqparts.params import *
 from cqparts.display import display
-
+import cqparts.constraint
+from cqparts.utils.geometry import CoordSystem
 
 def toLocalVector(self, x=0.0, y=0.0, z=0.0):
     if type(x) is cq.Workplane:
@@ -72,6 +73,15 @@ class Toggle(cp.Part):
             centered=False).\
             extrude(self.slot_height)
 
+        pin_plane = (
+            pin.faces("<Z").workplane(invert=True)
+            .transformed(origin=(None, right_edge.faces("<Z"), None))
+            .plane
+        )
+        self._mate=cp.constraint.Mate(
+            self,
+            CoordSystem.from_plane(pin_plane))
+
         pin = pin.edges("<Z and |Y").fillet(self.pin_width/2 - 0.0001)
         pin = pin.edges("<Y and |Z").chamfer(self.chamfer)
         pin = pin.edges("<Y and >Z").chamfer(self.chamfer)
@@ -83,6 +93,11 @@ class Toggle(cp.Part):
         ret = ret.edges().chamfer(self.chamfer)
         ret = ret.union(pin)
         return ret
+
+    @property
+    def mate(self):
+        local = self.local_obj
+        return self._mate
 
 
 class Mount(cp.Part):
@@ -150,6 +165,21 @@ class Mount(cp.Part):
         )
 
         rear_mount_bracket = front_mount_bracket.mirror(mirrorPlane="XZ")
+
+        toggle_plane = (
+            right_bottom.faces(">Z").workplane()
+                .transformed(
+                origin=(
+                    0,
+                    None,
+                    None
+                )
+            )
+            .plane
+        )
+        self._toggle_mate = cp.constraint.Mate(
+            self,
+            CoordSystem.from_plane(toggle_plane))
         return (
             top.union(back).
             union(front).
@@ -159,28 +189,51 @@ class Mount(cp.Part):
             union(rear_mount_bracket)
         )
 
+    @property
+    def toggle_mate(self):
+        local = self.local_obj
+        return self._toggle_mate
 
-toggle = Toggle(
-    length=80,
-    width=6,
-    height=7,
-    pin_width=1.5,
-    slot_width=5,
-    slot_height=5,
-    chamfer=0.3
-)
 
-mount = Mount(
-    width=60,
-    wall_thickness=1,
-    toggle_width=toggle.width,
-    toggle_height=toggle.height,
-    extra_space=0.1,
-    slot_width=2 * toggle.slot_width + toggle.pin_width,
-    bracket_width=10,
-    bracket_height=10,
-    mount_hole_diameter=3,
-    probe_hole_distance = 12,
-)
+class Assembly(cp.Assembly):
+    def make_components(self):
+        toggle = Toggle(
+            length=80,
+            width=6,
+            height=7,
+            pin_width=1.5,
+            slot_width=5,
+            slot_height=5,
+            chamfer=0.3
+        )
 
-display(mount)
+        mount = Mount(
+            width=60,
+            wall_thickness=1,
+            toggle_width=toggle.width,
+            toggle_height=toggle.height,
+            extra_space=0.1,
+            slot_width=2 * toggle.slot_width + toggle.pin_width,
+            bracket_width=10,
+            bracket_height=10,
+            mount_hole_diameter=3,
+            probe_hole_distance = 12,
+        )
+        return {
+            "toggle": toggle,
+            "mount": mount,
+        }
+
+    def make_constraints(self):
+        toggle = self.components["toggle"]
+        mount = self.components["mount"]
+        return [
+            cp.constraint.Fixed(
+                mate=mount.mate_origin,
+                world_coords=CoordSystem()
+            ),
+            cp.constraint.Coincident(toggle.mate, mount.toggle_mate)
+        ]
+
+assembly = Assembly()
+display(assembly)
