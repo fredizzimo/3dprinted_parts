@@ -4,6 +4,7 @@ from cqparts.params import *
 from cqparts.display import display
 import cqparts.constraint
 from cqparts.utils.geometry import CoordSystem
+import math
 
 def toLocalVector(self, x=0.0, y=0.0, z=0.0):
     if type(x) is cq.Workplane:
@@ -195,6 +196,44 @@ class Mount(cp.Part):
         return self._toggle_mate
 
 
+class Probe(cp.Part):
+    active_flat_length = 5
+    inactive_flat_length = 2
+    height = 20
+    bottom_width = 10
+    radius = 8.5
+    left_length = height - radius - 3
+    thickness=5
+    pin_area_width = 5
+    def make(self):
+
+        mid = math.sin(math.pi / 4.0) * self.radius
+        ret = (
+            cq.Workplane("XY")
+            .hLine(self.active_flat_length)
+            .vLine(-self.height)
+            .hLine(-self.bottom_width)
+            .vLine(self.left_length)
+            .lineTo(-self.radius, -self.radius-self.inactive_flat_length)
+            .vLine(self.inactive_flat_length)
+            .radiusArc((0, 0), self.radius)
+            .close()
+            .extrude(self.thickness)
+            .transformed(offset=(-self.radius + self.pin_area_width, 0))
+            .vLine(-self.pin_area_width)
+            .hLine(-self.pin_area_width)
+            .hLine(-self.pin_area_width)
+            .close()
+            .cutThruAll(positive=True)
+            .transformed(offset=(0, -self.pin_area_width))
+            .circle(1)
+            .cutThruAll(positive=True)
+        )
+
+        return ret
+
+
+
 class Assembly(cp.Assembly):
     def make_components(self):
         toggle = Toggle(
@@ -235,5 +274,7 @@ class Assembly(cp.Assembly):
             cp.constraint.Coincident(toggle.mate, mount.toggle_mate)
         ]
 
-assembly = Assembly()
-display(assembly)
+#assembly = Assembly()
+#display(assembly)
+probe = Probe()
+display(probe)
