@@ -205,9 +205,10 @@ class Probe(cp.Part):
     left_length = height - radius - 3
     thickness=5
     pin_area_width = 5
+    probe_circle_radius = 1
     def make(self):
 
-        mid = math.sin(math.pi / 4.0) * self.radius
+        probe_radius_45 = math.sin(math.pi / 4) * self.probe_circle_radius
         ret = (
             cq.Workplane("XY")
             .hLine(self.active_flat_length)
@@ -226,7 +227,21 @@ class Probe(cp.Part):
             .close()
             .cutThruAll(positive=True)
             .transformed(offset=(0, -self.pin_area_width))
-            .circle(1)
+            .circle(self.probe_circle_radius)
+            .cutThruAll(positive=True)
+            .transformed(offset=(
+                0,
+                self.probe_circle_radius + probe_radius_45))
+            .radiusArc((probe_radius_45, -self.probe_circle_radius), -self.probe_circle_radius)
+            .hLine(-self.probe_circle_radius)
+            .close()
+            .cutThruAll(positive=True)
+            .transformed(offset=(
+                -self.probe_circle_radius - probe_radius_45,
+                -self.probe_circle_radius - probe_radius_45))
+            .radiusArc((self.probe_circle_radius, -probe_radius_45), self.probe_circle_radius)
+            .vLine(self.probe_circle_radius)
+            .close()
             .cutThruAll(positive=True)
         )
 
