@@ -116,6 +116,7 @@ class Mount(cp.Part):
     bracket_height = PositiveFloat()
     mount_hole_diameter = PositiveFloat()
     probe_hole_distance = PositiveFloat()
+    hide_front = Boolean(False)
 
     def make(self):
         top = cq.Workplane("XY").box(
@@ -185,19 +186,39 @@ class Mount(cp.Part):
         self._toggle_mate = cp.constraint.Mate(
             self,
             CoordSystem.from_plane(toggle_plane))
-        return (
+
+        probe_plane = (
+            front_mount_bracket.faces(">Y").workplane()
+                .transformed(
+                    origin=(None, None, top.faces("<Z")),
+                    offset=(0, -self.extra_space - self.probe_hole_distance, 0)
+            )
+            .plane
+        )
+        self._probe_mate = cp.constraint.Mate(
+            self,
+            CoordSystem.from_plane(probe_plane))
+
+        ret = (
             top.union(back).
-            union(front).
             union(left_bottom).
             union(right_bottom).
-            union(front_mount_bracket).
             union(rear_mount_bracket)
         )
+
+        if not self.hide_front:
+            ret = ret.union(front).union(front_mount_bracket)
+        return ret
 
     @property
     def toggle_mate(self):
         local = self.local_obj
         return self._toggle_mate
+
+    @property
+    def screw_hole(self):
+        local = self.local_obj
+        return self._probe_mate
 
 
 class Probe(cp.Part):
@@ -300,6 +321,17 @@ class Probe(cp.Part):
 
         return ret
 
+    @property
+    def screw_hole(self):
+        return cp.constraint.Mate(
+            self,
+            CoordSystem(
+                origin=(0, -self.radius, 0),
+                xDir=(1, 0, 0),
+                normal=(0, 0, 1)
+            )
+        )
+
 
 class Assembly(cp.Assembly):
     def make_components(self):
@@ -324,37 +356,40 @@ class Assembly(cp.Assembly):
             bracket_height=10,
             mount_hole_diameter=3,
             probe_hole_distance = 12,
+            hide_front = False,
+        )
+        probe = Probe(
+            height=20,
+            thickness=5,
+            bottom_width=10,
+            active_flat_length=5,
+            inactive_flat_length=2,
+            radius=8.5,
+            left_slope_height=3,
+            pin_area_width=5,
+            probe_circle_radius=1,
+            corner_radius=1,
+            chamfer_radius=0.3,
+            screw_diameter=3,
         )
         return {
             "toggle": toggle,
             "mount": mount,
+            "probe": probe
         }
 
     def make_constraints(self):
         toggle = self.components["toggle"]
         mount = self.components["mount"]
+        probe = self.components["probe"]
         return [
             cp.constraint.Fixed(
                 mate=mount.mate_origin,
                 world_coords=CoordSystem()
             ),
-            cp.constraint.Coincident(toggle.mate, mount.toggle_mate)
+            cp.constraint.Coincident(toggle.mate, mount.toggle_mate),
+            cp.constraint.Coincident(probe.screw_hole, mount.screw_hole)
         ]
 
-#assembly = Assembly()
-#display(assembly)
-probe = Probe(
-    height=20,
-    thickness=5,
-    bottom_width=10,
-    active_flat_length=5,
-    inactive_flat_length=2,
-    radius=8.5,
-    left_slope_height=3,
-    pin_area_width=5,
-    probe_circle_radius=1,
-    corner_radius=1,
-    chamfer_radius=0.3,
-    screw_diameter=3,
-)
-display(probe)
+assembly = Assembly()
+display(assembly)
