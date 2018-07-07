@@ -54,7 +54,7 @@ class Toggle(cp.Part):
     chamfer = PositiveFloat()
 
     def make(self):
-        pin = cq.Workplane("XY").box(self.pin_width, self.slot_width, self.slot_height)
+        pin = cq.Workplane("XY").box(self.pin_width, self.slot_height, self.slot_height)
 
         top_wall = pin.edges(">Z and <Y").workplane().box(
             self.length,
@@ -64,7 +64,7 @@ class Toggle(cp.Part):
 
         slot_wall = pin.faces(">Y").workplane(). \
             rect(self.pin_width + self.slot_width * 2, self.slot_height). \
-            extrude(self.width - self.slot_width, combine=False)
+            extrude(self.width - self.slot_height, combine=False)
 
         right_edge_plane = cq.Workplane("XY")
         right_edge_plane = right_edge_plane.transformed(
@@ -91,12 +91,14 @@ class Toggle(cp.Part):
         pin = pin.edges("<Y and |Z").chamfer(self.chamfer)
         pin = pin.edges("<Y and >Z").chamfer(self.chamfer)
 
+
         ret = slot_wall.union(top_wall)
         ret = ret.union(right_edge)
         ret = ret.union(right_edge.mirror(mirrorPlane="YZ"))
 
         ret = ret.edges().chamfer(self.chamfer)
         ret = ret.union(pin)
+
         return ret
 
     @property
@@ -143,7 +145,7 @@ class Mount(cp.Part):
                 origin=(front.vertices("<X"), front.vertices(">Y"), None),
             ).
             box(
-                self.slot_width,
+                (self.width - self.slot_width) / 2,
                 self.toggle_width + self.extra_space,
                 self.wall_thickness,
                 combine=False,
@@ -229,10 +231,10 @@ class Probe(cp.Part):
     inactive_flat_length = PositiveFloat()
     radius = PositiveFloat()
     left_slope_height = PositiveFloat()
-    pin_area_width = PositiveFloat()
+    pin_height = PositiveFloat()
     probe_circle_radius = PositiveFloat()
     corner_radius = PositiveFloat()
-    chamfer_radius = PositiveFloat()
+    chamfer = PositiveFloat()
     screw_diameter = PositiveFloat()
 
     def make(self):
@@ -250,13 +252,13 @@ class Probe(cp.Part):
             .radiusArc((0, 0), self.radius)
             .close()
             .extrude(self.thickness)
-            .transformed(offset=(-self.radius + self.pin_area_width, 0))
-            .vLine(-self.pin_area_width)
-            .hLine(-self.pin_area_width)
-            .hLine(-self.pin_area_width)
+            .transformed(offset=(-self.radius + self.pin_height, 0))
+            .vLine(-self.pin_height)
+            .hLine(-self.pin_height)
+            .hLine(-self.pin_height)
             .close()
             .cutThruAll(positive=True)
-            .transformed(offset=(0, -self.pin_area_width))
+            .transformed(offset=(0, -self.pin_height))
             .circle(self.probe_circle_radius)
             .cutThruAll(positive=True)
             .transformed(offset=(
@@ -288,11 +290,11 @@ class Probe(cp.Part):
             .union(ret)
         )
 
-        extra_probe_circle_radius = self.chamfer_radius + 0.01
+        extra_probe_circle_radius = self.chamfer + 0.01
         probe_circle_left = (
-            -self.radius + self.pin_area_width - self.probe_circle_radius)
+            -self.radius + self.pin_height - self.probe_circle_radius)
         probe_circle_bottom = (
-            -self.pin_area_width - self.probe_circle_radius)
+            -self.pin_height - self.probe_circle_radius)
         probe_circle_edges = cq.BoxSelector(
             (probe_circle_left - extra_probe_circle_radius,
              probe_circle_bottom - extra_probe_circle_radius,
@@ -314,10 +316,10 @@ class Probe(cp.Part):
 
         ret = ret.newObject(
             probe_circle_edges.filter(
-                ret.edges("not |Z").vals())).chamfer(self.chamfer_radius)
+                ret.edges("not |Z").vals())).chamfer(self.chamfer)
         ret = ret.newObject(
             other_edges.filter(
-                ret.edges("not |Z").vals())).chamfer(self.chamfer_radius)
+                ret.edges("not |Z").vals())).chamfer(self.chamfer)
 
         return ret
 
@@ -335,14 +337,31 @@ class Probe(cp.Part):
 
 class Assembly(cp.Assembly):
     def make_components(self):
+        chamfer = 0.3
+        screw_diameter = 3
+        probe = Probe(
+            height=20,
+            thickness=5,
+            bottom_width=10,
+            active_flat_length=8.5,
+            inactive_flat_length=2,
+            radius=8.5,
+            left_slope_height=3,
+            pin_height=5,
+            probe_circle_radius=1,
+            corner_radius=1,
+            chamfer=chamfer,
+            screw_diameter=screw_diameter,
+        )
+
         toggle = Toggle(
             length=80,
             width=6,
             height=7,
-            pin_width=1.5,
-            slot_width=5,
-            slot_height=5,
-            chamfer=0.3
+            pin_width=1.5, # TODO match the radius with the hole
+            slot_width=probe.active_flat_length + probe.radius,
+            slot_height=probe.pin_height,
+            chamfer=chamfer
         )
 
         mount = Mount(
@@ -353,24 +372,10 @@ class Assembly(cp.Assembly):
             extra_space=0.1,
             slot_width=2 * toggle.slot_width + toggle.pin_width,
             bracket_width=10,
-            bracket_height=10,
-            mount_hole_diameter=3,
-            probe_hole_distance = 12,
-            hide_front = False,
-        )
-        probe = Probe(
-            height=20,
-            thickness=5,
-            bottom_width=10,
-            active_flat_length=5,
-            inactive_flat_length=2,
-            radius=8.5,
-            left_slope_height=3,
-            pin_area_width=5,
-            probe_circle_radius=1,
-            corner_radius=1,
-            chamfer_radius=0.3,
-            screw_diameter=3,
+            bracket_height=7,
+            mount_hole_diameter=screw_diameter,
+            probe_hole_distance = probe.radius + (toggle.height - toggle.slot_height),
+            hide_front=False,
         )
         return {
             "toggle": toggle,
