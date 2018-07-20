@@ -79,8 +79,7 @@ class Toggle(cp.Part):
             extrude(self.slot_height)
 
         pin_plane = (
-            pin.faces("<Z").workplane(invert=True)
-            .transformed(origin=(None, right_edge.faces("<Z"), None))
+            pin.faces("<Y").workplane()
             .plane
         )
         self._mate=cp.constraint.Mate(
@@ -104,6 +103,12 @@ class Toggle(cp.Part):
     @property
     def mate(self):
         local = self.local_obj
+        if False:
+            return cp.constraint.Mate(self, CoordSystem(
+                origin=(0, -self.slot_height / 2, 0),
+                xDir =(1, 0, 0),
+                normal =(0, 0, 1)
+            ))
         return self._mate
 
 
@@ -329,7 +334,23 @@ class Probe(cp.Part):
             self,
             CoordSystem(
                 origin=(0, -self.radius, 0),
-                xDir=(1, 0, 0),
+                xDir=(0.5, 0.5, 0),
+                normal=(0, 0, 1)
+            )
+        )
+
+    @property
+    def toggle_mate(self):
+        probe_radius_45 = math.sin(math.pi / 4) * self.probe_circle_radius
+        return cp.constraint.Mate(
+            self,
+            CoordSystem(
+                origin=(
+                    #-self.pin_height,
+                    #-self.pin_height,
+                    0, 0,
+                    0),
+                #xDir = (0.5, 0.5, 0),
                 normal=(0, 0, 1)
             )
         )
@@ -375,7 +396,7 @@ class Assembly(cp.Assembly):
             bracket_height=7,
             mount_hole_diameter=screw_diameter,
             probe_hole_distance = probe.radius + (toggle.height - toggle.slot_height),
-            hide_front=False,
+            hide_front=True,
         )
         return {
             "toggle": toggle,
@@ -392,7 +413,7 @@ class Assembly(cp.Assembly):
                 mate=mount.mate_origin,
                 world_coords=CoordSystem()
             ),
-            cp.constraint.Coincident(toggle.mate, mount.toggle_mate),
+            cp.constraint.Coincident(toggle.mate, probe.toggle_mate),
             cp.constraint.Coincident(probe.screw_hole, mount.screw_hole)
         ]
 
